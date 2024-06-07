@@ -260,9 +260,10 @@ if selected_page == "Report":
         col1, col2 = st.columns([3, 1])
         
         with col1:
-            export_format = st.selectbox("Select export format", ["PDF", "CSV", "JSON"])
+            display_report(report)           
         
         with col2:
+            export_format = st.selectbox("Select export format", ["PDF", "CSV", "JSON"])
             if export_format == "CSV":
                 report_df = pd.DataFrame([report])
                 st.download_button(label="Download as CSV", data=report_df.to_csv(index=False), mime='text/csv', file_name='report.csv')
@@ -272,8 +273,7 @@ if selected_page == "Report":
             elif export_format == "JSON":
                 json_data = json.dumps(report, indent=4)
                 st.download_button(label="Download as JSON", data=json_data, mime='application/json', file_name='report.json')
-
-        display_report(report)
+       
     else:
         st.error("No report available. Please run an investigation on the Home page.")
 
