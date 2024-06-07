@@ -1,10 +1,10 @@
 from openai import OpenAI, RateLimitError
 import json
 
-def analyze_site(report, api_key):
+def analyze_site(report, user_api_key):
     """Analyze the site using OpenAI and return a description."""
     
-    client = OpenAI(api_key)
+    client = OpenAI(api_key=user_api_key)
 
     prompt = f"Analyze the following website report and provide a detailed description about the site's nature, infrastructure, and tech stack. Highlight any important details:\n\n{json.dumps(report, indent=4)}"
 
