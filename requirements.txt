@@ -7,3 +7,4 @@ fpdf
 requests
 python-Wappalyzer
 openai
+scapy

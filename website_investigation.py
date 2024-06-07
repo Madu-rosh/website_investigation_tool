@@ -13,6 +13,7 @@ from Wappalyzer import Wappalyzer, WebPage
 import pydoc
 from report_display import display_report, export_to_pdf
 from analyze_report import analyze_site  # Ensure this import is correct
+from scapy.all import sr1, IP, ICMP
 
 def ensure_https(url):
     """Ensure the URL starts with https://"""
@@ -21,18 +22,24 @@ def ensure_https(url):
     return url
 
 def traceroute(url):
-    """Perform traceroute to the provided URL"""
-    if platform.system().lower() == "windows":
-        command = ['tracert', url]
-    else:
-        command = ['traceroute', url]
-
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = process.communicate()
-    if process.returncode != 0:
-        st.error(f"Error running traceroute: {stderr.decode()}")
-        return None
-    return stdout.decode()
+    """Perform traceroute to the provided URL using scapy"""
+    domain = urlparse(url).netloc
+    max_hops = 30
+    result = []
+    
+    for ttl in range(1, max_hops + 1):
+        pkt = IP(dst=domain, ttl=ttl) / ICMP()
+        reply = sr1(pkt, verbose=0, timeout=1)
+        
+        if reply is None:
+            result.append(f"{ttl} * * * Request timed out.")
+        elif reply.type == 0:
+            result.append(f"{ttl} {reply.src} reached.")
+            break
+        else:
+            result.append(f"{ttl} {reply.src}")
+    
+    return "\n".join(result)
 
 def dig_command(domain):
     """Run dig command to gather DNS information"""
@@ -227,20 +234,21 @@ if selected_page == "Home":
 
 # Report Page
 if selected_page == "Report":
+    st.header("Report")
     if "report" in st.session_state:
         report = st.session_state.report
         site_description = st.session_state.site_description
+        
+        st.subheader("Site Description")
+        st.write(site_description)
         
         # Use columns to place export options and buttons
         col1, col2 = st.columns([3, 1])
         
         with col1:
-            st.subheader("Site Description")
-            st.write(site_description)
-            display_report(report)
+            export_format = st.selectbox("Select export format", ["PDF", "CSV", "JSON"])
         
         with col2:
-            export_format = st.selectbox("Select export format", ["PDF", "CSV", "JSON"])
             if export_format == "CSV":
                 report_df = pd.DataFrame([report])
                 st.download_button(label="Download as CSV", data=report_df.to_csv(index=False), mime='text/csv', file_name='report.csv')
@@ -250,6 +258,8 @@ if selected_page == "Report":
             elif export_format == "JSON":
                 json_data = json.dumps(report, indent=4)
                 st.download_button(label="Download as JSON", data=json_data, mime='application/json', file_name='report.json')
+
+        display_report(report)
     else:
         st.error("No report available. Please run an investigation on the Home page.")
 
