@@ -23,12 +23,19 @@ def ensure_https(url):
 
 def traceroute(url):
     """Perform traceroute to the provided URL using scapy"""
-    domain = urlparse(url).netloc
+    try:
+        domain = urlparse(url).netloc
+        # Resolve the domain to an IP address to ensure it's valid
+        ip = socket.gethostbyname(domain)
+    except socket.gaierror as e:
+        st.error(f"Error resolving domain: {str(e)}")
+        return f"Error resolving domain: {str(e)}"
+
     max_hops = 30
     result = []
     
     for ttl in range(1, max_hops + 1):
-        pkt = IP(dst=domain, ttl=ttl) / ICMP()
+        pkt = IP(dst=ip, ttl=ttl) / ICMP()
         reply = sr1(pkt, verbose=0, timeout=1)
         
         if reply is None:
@@ -173,14 +180,14 @@ if selected_page == "Home":
             with col2:
                 st.write("##### Status")
             with st.spinner('Running traceroute...'):
-                domain = urlparse(url).netloc
-                traceroute_data = traceroute(domain)
+                traceroute_data = traceroute(url)
                 if traceroute_data:
                     col2.success('Traceroute completed')
                 else:
                     col2.error('Traceroute failed')
 
             with st.spinner('Running dig command...'):
+                domain = urlparse(url).netloc
                 dig_data = dig_command(domain)
                 if dig_data:
                     col2.success('Dig command completed')
