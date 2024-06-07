@@ -38,10 +38,10 @@ def traceroute(url, ipinfo_key=None):
                 return response.text
             else:
                 st.error(f"Error running traceroute: {response.text}")
-                return None
+                return "Traceroute failed due to API error."
         except requests.RequestException as e:
             st.error(f"Error running traceroute: {str(e)}")
-            return None
+            return "Traceroute failed due to network error."
     else:
         return "No IPInfo key provided; skipping traceroute."
 
@@ -57,10 +57,10 @@ def dig_command(domain):
             return result.stdout
         else:
             st.error(f"Error running dig command: {result.stderr}")
-            return None
+            return "DNS lookup failed."
     except FileNotFoundError:
         st.error("dig/nslookup command not found. Please ensure it is installed on your system.")
-        return None
+        return "dig/nslookup command not available."
 
 def ip_lookup(ip):
     """Perform IP lookup using IPWhois"""
@@ -249,6 +249,7 @@ if selected_page == "Home":
 
 # Report Page
 if selected_page == "Report":
+    st.header("Report")
     if "report" in st.session_state:
         report = st.session_state.report
         site_description = st.session_state.site_description
