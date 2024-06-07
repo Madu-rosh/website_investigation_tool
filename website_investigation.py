@@ -13,7 +13,6 @@ from Wappalyzer import Wappalyzer, WebPage
 import pydoc
 from report_display import display_report, export_to_pdf
 from analyze_report import analyze_site  # Ensure this import is correct
-from scapy.all import sr1, IP, ICMP
 
 def ensure_https(url):
     """Ensure the URL starts with https://"""
@@ -22,7 +21,7 @@ def ensure_https(url):
     return url
 
 def traceroute(url):
-    """Perform traceroute to the provided URL using scapy"""
+    """Perform traceroute to the provided URL using an external API"""
     try:
         domain = urlparse(url).netloc
         # Resolve the domain to an IP address to ensure it's valid
@@ -30,23 +29,18 @@ def traceroute(url):
     except socket.gaierror as e:
         st.error(f"Error resolving domain: {str(e)}")
         return f"Error resolving domain: {str(e)}"
-
-    max_hops = 30
-    result = []
     
-    for ttl in range(1, max_hops + 1):
-        pkt = IP(dst=ip, ttl=ttl) / ICMP()
-        reply = sr1(pkt, verbose=0, timeout=1)
-        
-        if reply is None:
-            result.append(f"{ttl} * * * Request timed out.")
-        elif reply.type == 0:
-            result.append(f"{ttl} {reply.src} reached.")
-            break
+    # Using an external API for traceroute (example: ipinfo.io)
+    try:
+        response = requests.get(f"https://api.hackertarget.com/mtr/?q={ip}")
+        if response.status_code == 200:
+            return response.text
         else:
-            result.append(f"{ttl} {reply.src}")
-    
-    return "\n".join(result)
+            st.error(f"Error running traceroute: {response.text}")
+            return None
+    except requests.RequestException as e:
+        st.error(f"Error running traceroute: {str(e)}")
+        return None
 
 def dig_command(domain):
     """Run dig command to gather DNS information"""
