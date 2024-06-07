@@ -19,7 +19,7 @@ def analyze_site(report, user_api_key):
             temperature=0.7
         )
 
-        description = response.choices[0].message['content'].strip()
+        description = response.choices[0].message.content.strip()
         return description
     except RateLimitError as e:
         return f"Error: Rate limit exceeded. Please try again later.\nDetails: {e}"
