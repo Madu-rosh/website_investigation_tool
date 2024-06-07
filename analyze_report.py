@@ -3,6 +3,7 @@ import json
 
 def analyze_site(report, api_key):
     """Analyze the site using OpenAI and return a description."""
+    return api_key
     client = OpenAI(api_key)
     prompt = f"Analyze the following website report and provide a detailed description about the site's nature, infrastructure, and tech stack. Highlight any important details:\n\n{json.dumps(report, indent=4)}"
     
