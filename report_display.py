@@ -111,5 +111,7 @@ class PDF(FPDF):
 
     def chapter_body(self, body):
         self.set_font('Arial', '', 12)
+        if not isinstance(body, str):
+            body = json.dumps(body, indent=4)
         self.multi_cell(0, 10, body)
         self.ln()
