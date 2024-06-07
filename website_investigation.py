@@ -249,7 +249,6 @@ if selected_page == "Home":
 
 # Report Page
 if selected_page == "Report":
-    st.header("Report")
     if "report" in st.session_state:
         report = st.session_state.report
         site_description = st.session_state.site_description
