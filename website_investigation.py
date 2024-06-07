@@ -20,7 +20,7 @@ def ensure_https(url):
         url = "https://" + url
     return url
 
-def traceroute(url):
+def traceroute(url, ipinfo_key=None):
     """Perform traceroute to the provided URL using an external API"""
     try:
         domain = urlparse(url).netloc
@@ -30,18 +30,20 @@ def traceroute(url):
         st.error(f"Error resolving domain: {str(e)}")
         return f"Error resolving domain: {str(e)}"
     
-    # Using an external API for traceroute
-    try:
-        api_key = st.secrets["api"]["ipinfo_key"]
-        response = requests.get(f"https://api.ipinfo.io/{ip}/traceroute?token={api_key}")
-        if response.status_code == 200:
-            return response.text
-        else:
-            st.error(f"Error running traceroute: {response.text}")
+    if ipinfo_key:
+        # Using an external API for traceroute
+        try:
+            response = requests.get(f"https://api.ipinfo.io/{ip}/traceroute?token={ipinfo_key}")
+            if response.status_code == 200:
+                return response.text
+            else:
+                st.error(f"Error running traceroute: {response.text}")
+                return None
+        except requests.RequestException as e:
+            st.error(f"Error running traceroute: {str(e)}")
             return None
-    except requests.RequestException as e:
-        st.error(f"Error running traceroute: {str(e)}")
-        return None
+    else:
+        return "No IPInfo key provided; skipping traceroute."
 
 def dig_command(domain):
     """Run dig command to gather DNS information"""
@@ -166,6 +168,14 @@ if selected_page == "Home":
     
     url_input = st.text_input("Website URL", "")
     
+    st.write("Enter your OpenAI API key:")
+    openai_api_key = st.text_input("OpenAI API Key", type="password")
+
+    st.write("Enter your IPInfo API key (optional):")
+    ipinfo_api_key = st.text_input("IPInfo API Key", type="password")
+
+    st.info("We only use your API keys during the session. They are not stored or saved.")
+    
     # Use columns to separate main input area from status messages
     col1, col2 = st.columns([1, 2])
     
@@ -175,7 +185,7 @@ if selected_page == "Home":
             with col2:
                 st.write("##### Status")
             with st.spinner('Running traceroute...'):
-                traceroute_data = traceroute(url)
+                traceroute_data = traceroute(url, ipinfo_api_key)
                 if traceroute_data:
                     col2.success('Traceroute completed')
                 else:
@@ -226,9 +236,12 @@ if selected_page == "Home":
             report = generate_report_json(domain, traceroute_data, dig_data, ip_info, tech_info, infra_info, site_details)
 
             # Get site description from OpenAI
-            with st.spinner('Analyzing site report...'):
-                site_description = analyze_site(report)
-            
+            if openai_api_key:
+                with st.spinner('Analyzing site report...'):
+                    site_description = analyze_site(report, openai_api_key)
+            else:
+                site_description = "No OpenAI API key provided; skipping detailed analysis."
+
             st.session_state.report = report
             st.session_state.site_description = site_description
 
