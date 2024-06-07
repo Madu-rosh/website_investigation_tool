@@ -30,9 +30,10 @@ def traceroute(url):
         st.error(f"Error resolving domain: {str(e)}")
         return f"Error resolving domain: {str(e)}"
     
-    # Using an external API for traceroute (example: ipinfo.io)
+    # Using an external API for traceroute
     try:
-        response = requests.get(f"https://api.hackertarget.com/mtr/?q={ip}")
+        api_key = st.secrets["api"]["ipinfo_key"]
+        response = requests.get(f"https://api.ipinfo.io/{ip}/traceroute?token={api_key}")
         if response.status_code == 200:
             return response.text
         else:
