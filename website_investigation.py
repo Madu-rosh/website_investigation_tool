@@ -32,8 +32,12 @@ def traceroute(url, ipinfo_key=None):
     
     if ipinfo_key:
         # Using an external API for traceroute
+        url = f'https://api.ipinfo.io/{ip}/traceroute'
+        params = {
+            'token': ipinfo_key
+        }
         try:
-            response = requests.get(f"https://api.ipinfo.io/{ip}/traceroute?token={ipinfo_key}")
+            response = requests.get(url, params=params)
             if response.status_code == 200:
                 return response.text
             else:
